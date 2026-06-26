@@ -1,5 +1,6 @@
 import type { FundamentalAnalysis } from "@wheeldesk/fundamental-analysis";
 import { DECISION_THRESHOLDS, WHEEL_SCORE_RUBRIC } from "@wheeldesk/core";
+import type { TradeStatus } from "@wheeldesk/core";
 import type { OptionAnalytics } from "@wheeldesk/options-engine";
 import type { InstitutionalRiskResult } from "@wheeldesk/risk-engine";
 import type { TechnicalAnalysis } from "@wheeldesk/technical-analysis";
@@ -38,6 +39,7 @@ export type RankedTrade = WheelScoreResult & {
   rank: number;
   riskLevel: number;
   annualizedYield: number;
+  finalDecision?: TradeStatus;
   recommendation: "Strong Buy" | "Buy" | "Watch" | "Avoid" | "Blocked";
 };
 
@@ -79,7 +81,7 @@ export function calculateWheelScore(input: WheelScoreInput): WheelScoreResult {
   };
 }
 
-export function rankTrades(scores: Array<WheelScoreResult & { riskLevel: number; annualizedYield: number; blocked: boolean }>): RankedTrade[] {
+export function rankTrades(scores: Array<WheelScoreResult & { riskLevel: number; annualizedYield: number; blocked: boolean; finalDecision?: TradeStatus }>): RankedTrade[] {
   return [...scores]
     .sort((a, b) => b.wheelScore - a.wheelScore || a.riskLevel - b.riskLevel || b.annualizedYield - a.annualizedYield)
     .map((score, index) => ({

@@ -5,10 +5,11 @@ import { Button, Badge } from "@/components/ui";
 import { currency, percent } from "@/lib/utils";
 import type { OptionCandidate } from "@wheeldesk/core";
 import type { RiskResult } from "@wheeldesk/risk-engine";
+import type { ExplainableDecision } from "@wheeldesk/decision-engine";
 
-export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: RiskResult }> }) {
+export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: RiskResult; decision?: ExplainableDecision }> }) {
   function exportCsv() {
-    const header = ["Ticker", "Price", "Expiration", "DTE", "Strike", "Delta", "Premium", "IV Rank", "PoP", "Annualized Yield", "Capital Required", "OI", "Volume", "Spread %", "Earnings Risk", "Score", "Action"];
+    const header = ["Ticker", "Price", "Expiration", "DTE", "Strike", "Delta", "Premium", "IV Rank", "PoP", "Annualized Yield", "Capital Required", "OI", "Volume", "Spread %", "Earnings Risk", "Score", "Action", "Reason"];
     const body = rows.map((row) => [
       row.ticker,
       row.currentPrice,
@@ -26,7 +27,8 @@ export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: 
       row.risk.spreadPercent,
       row.earningsBeforeExpiration ? "Yes" : "No",
       row.risk.score,
-      row.risk.status
+      row.risk.status,
+      row.decision?.summary ?? row.risk.reasons.join(" ")
     ]);
     const csv = [header, ...body].map((line) => line.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -48,7 +50,7 @@ export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: 
         <table className="text-sm">
           <thead className="border-b border-border text-left text-xs uppercase text-slate-500">
             <tr>
-              {["Ticker", "Price", "Expiration", "DTE", "Strike", "Delta", "Premium", "IV Rank", "PoP", "Ann Yield", "Capital", "OI", "Volume", "Spread", "Earnings", "Score", "Action"].map((column) => <th className="whitespace-nowrap px-2 py-2" key={column}>{column}</th>)}
+              {["Ticker", "Price", "Expiration", "DTE", "Strike", "Delta", "Premium", "IV Rank", "PoP", "Ann Yield", "Capital", "OI", "Volume", "Spread", "Earnings", "Score", "Action", "Reason"].map((column) => <th className="whitespace-nowrap px-2 py-2" key={column}>{column}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -72,6 +74,9 @@ export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: 
                 <td className="px-2">{row.risk.score}/10</td>
                 <td className="px-2"><Badge tone={row.risk.status === "APPROVED" ? "positive" : row.risk.status === "WATCH" ? "caution" : "danger"}>{row.risk.status}</Badge></td>
                 <td className="px-2"><button aria-label="Add planned CSP"><Plus className="h-4 w-4" /></button></td>
+                <td className="min-w-80 px-2 text-slate-600 dark:text-slate-300">
+                  {row.decision?.hardRuleViolations.length ? row.decision.hardRuleViolations.join(" ") : row.decision?.positiveFactors.join(" ") || row.risk.reasons.join(" ")}
+                </td>
               </tr>
             ))}
           </tbody>

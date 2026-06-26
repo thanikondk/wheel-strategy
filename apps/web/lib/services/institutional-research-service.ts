@@ -4,6 +4,7 @@ import { evaluateEventRisk } from "@wheeldesk/market-data";
 import type { NormalizedOptionContract } from "@wheeldesk/market-data";
 import { analyzeFundamentals } from "@wheeldesk/fundamental-analysis";
 import { analyzeOption } from "@wheeldesk/options-engine";
+import { decideCashSecuredPut } from "@wheeldesk/decision-engine";
 import { evaluateInstitutionalRisk } from "@wheeldesk/risk-engine";
 import { calculateWheelScore, rankTrades } from "@wheeldesk/scoring-engine";
 import { analyzeTechnicals } from "@wheeldesk/technical-analysis";
@@ -61,6 +62,7 @@ export async function getInstitutionalService() {
     const stock = stocks.find((item) => item.ticker === ticker);
     const cashReserveAfterTrade = accountSnapshot.cashAvailable - options.capitalRequired;
     const risk = evaluateInstitutionalRisk({
+      ticker,
       accountSize: accountSnapshot.accountValue,
       capitalRequired: options.capitalRequired,
       cashReserveAfterTrade,
@@ -73,7 +75,11 @@ export async function getInstitutionalService() {
       spreadPercent: options.spreadPercent,
       positionSizePercent: options.capitalRequired / accountSnapshot.accountValue,
       fundamentalScore: fundamentals.overallFundamentalScore,
-      userWouldOwn: Boolean(stock && stock.wheelQualityScore >= 60)
+      userWouldOwn: Boolean(stock && stock.wheelQualityScore >= 60),
+      dte: optionDte,
+      delta: option.delta,
+      openInterest: option.openInterest,
+      volume: option.volume
     });
     const wheelScore = calculateWheelScore({
       ticker,
@@ -88,6 +94,23 @@ export async function getInstitutionalService() {
       eventScore: events.score
     });
 
+    const cspDecision = decideCashSecuredPut({
+      quote,
+      contract: option,
+      dte: optionDte,
+      accountSize: accountSnapshot.accountValue,
+      cashAvailable: accountSnapshot.cashAvailable,
+      existingTickerExposure: 0,
+      wheelScore: wheelScore.wheelScore,
+      riskScore: risk.riskLevel,
+      earningsRisk: events.insideEarningsWindow,
+      assignmentReady: Boolean(stock && stock.wheelQualityScore >= 60),
+      fundamentalScore: fundamentals.overallFundamentalScore,
+      liquidityScore: options.liquidityScore,
+      ivRank: options.ivRank,
+      sectorExposure: 0.24
+    });
+
     return {
       ticker,
       quote,
@@ -98,12 +121,50 @@ export async function getInstitutionalService() {
       events,
       risk,
       wheelScore,
+      cspDecision,
       decision: {
-        shouldSellCsp: risk.status !== "BLOCKED" && wheelScore.wheelScore >= 75,
-        recommendation: risk.status === "BLOCKED" ? "Blocked" : wheelScore.wheelScore >= 90 ? "Strong Buy" : wheelScore.wheelScore >= 80 ? "Buy" : wheelScore.wheelScore >= 70 ? "Watch" : "Avoid",
-        reasoning: [...wheelScore.explanation, ...risk.reasoning, ...risk.hardBlocks, ...options.explanation, ...events.explanation]
+        shouldSellCsp: cspDecision.finalDecision === "APPROVED",
+        recommendation: cspDecision.finalDecision,
+        reasoning: [...cspDecision.reasoning, ...cspDecision.hardRuleViolations, ...wheelScore.explanation, ...options.explanation, ...events.explanation]
       }
     };
+  }
+
+  async function screenCspCandidates(tickers = ["AAPL", "AMD", "SOFI"]) {
+    const recommendations = await Promise.all(tickers.map((ticker) => buildRecommendation(ticker).catch(() => undefined)));
+    return recommendations.filter((item): item is Awaited<ReturnType<typeof buildRecommendation>> => Boolean(item)).map((item) => ({
+      ticker: item.ticker,
+      currentPrice: item.quote.price,
+      expiration: item.option.expiration,
+      dte: dte(item.option.expiration),
+      strike: item.option.strike,
+      delta: Math.abs(item.option.delta),
+      bid: item.option.bid,
+      ask: item.option.ask,
+      mid: item.option.mark,
+      premium: item.option.mark * 100,
+      iv: item.option.impliedVolatility,
+      ivRank: item.options.ivRank,
+      openInterest: item.option.openInterest,
+      volume: item.option.volume,
+      probabilityOfProfit: item.option.probabilityOTM,
+      annualizedYield: item.options.annualizedReturn,
+      earningsBeforeExpiration: item.events.insideEarningsWindow,
+      sector: "Research",
+      userWouldOwn: item.cspDecision.supportingCalculations.assignmentReadiness === true,
+      risk: {
+        score: item.risk.riskLevel,
+        confidence: item.risk.confidence,
+        status: item.cspDecision.finalDecision,
+        reasons: item.cspDecision.reasoning,
+        hardBlocks: item.cspDecision.hardRuleViolations,
+        spreadPercent: item.options.spreadPercent,
+        capitalRequired: item.options.capitalRequired,
+        allocationPercent: item.options.capitalRequired / accountSnapshot.accountValue
+      },
+      decision: item.cspDecision,
+      wheelScore: item.wheelScore
+    }));
   }
 
   async function rankCspUniverse(tickers = ["AAPL", "MSFT", "AMD", "JPM", "SOFI"]) {
@@ -112,7 +173,8 @@ export async function getInstitutionalService() {
       ...item.wheelScore,
       riskLevel: item.risk.riskLevel,
       annualizedYield: item.options.annualizedReturn,
-      blocked: item.risk.status === "BLOCKED"
+      blocked: item.cspDecision.finalDecision === "BLOCKED",
+      finalDecision: item.cspDecision.finalDecision
     })));
   }
 
@@ -120,6 +182,7 @@ export async function getInstitutionalService() {
     provider,
     getQuote,
     buildRecommendation,
+    screenCspCandidates,
     rankCspUniverse
   };
 }

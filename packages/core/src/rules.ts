@@ -25,6 +25,8 @@ export const ACCOUNT_RULES = {
 
 export const RISK_LIMITS = {
   accountSize: 20_000,
+  annualReturnTargetMin: 0.12,
+  annualReturnTargetMax: 0.25,
   maxAllocationPerUnderlying: 0.2,
   preferredAllocationMin: 0.1,
   preferredAllocationMax: 0.15,

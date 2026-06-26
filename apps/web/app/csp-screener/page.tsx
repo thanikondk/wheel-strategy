@@ -1,23 +1,10 @@
-import { accountSnapshot, cspCandidates, stocks } from "@wheeldesk/core";
-import { scoreTrade } from "@wheeldesk/risk-engine";
 import { Card, PageHeader } from "@/components/ui";
 import { ScreenerTable } from "@/components/screener-table";
+import { getInstitutionalService } from "@/lib/services/institutional-research-service";
 
-export default function CspScreenerPage() {
-  const rows = cspCandidates.map((candidate) => ({
-    ...candidate,
-    risk: scoreTrade({
-      ...candidate,
-      accountSize: 20_000,
-      cashAvailable: accountSnapshot.cashAvailable,
-      cashReserveAfterTrade: accountSnapshot.cashAvailable - candidate.strike * 100,
-      tickerQualityScore: stocks.find((stock) => stock.ticker === candidate.ticker)?.wheelQualityScore ?? 50,
-      existingExposure: 0,
-      sectorConcentration: 0.24,
-      assignmentReady: candidate.userWouldOwn,
-      marketRegime: "Sideways"
-    })
-  }));
+export default async function CspScreenerPage() {
+  const service = await getInstitutionalService();
+  const rows = await service.screenCspCandidates();
 
   return (
     <>

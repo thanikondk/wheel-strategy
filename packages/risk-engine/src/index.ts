@@ -26,6 +26,7 @@ export type RiskResult = {
 };
 
 export type InstitutionalRiskInput = {
+  ticker: string;
   accountSize: number;
   capitalRequired: number;
   cashReserveAfterTrade: number;
@@ -39,6 +40,10 @@ export type InstitutionalRiskInput = {
   positionSizePercent: number;
   fundamentalScore: number;
   userWouldOwn: boolean;
+  dte?: number;
+  delta?: number;
+  openInterest?: number;
+  volume?: number;
   earningsOverride?: boolean;
 };
 
@@ -62,6 +67,12 @@ export function evaluateInstitutionalRisk(input: InstitutionalRiskInput): Instit
   if (input.fundamentalScore < RISK_LIMITS.poorFundamentalScore) hardBlocks.push("Poor fundamentals.");
   if (!input.userWouldOwn) hardBlocks.push("User marked stock as would not own.");
   if (input.earningsWindow && !input.earningsOverride) hardBlocks.push("Upcoming earnings inside configured window.");
+  if ((RISK_LIMITS.blockedTickers as readonly string[]).includes(input.ticker)) hardBlocks.push("Ticker is on the blocked list.");
+  if (input.delta !== undefined && Math.abs(input.delta) > RISK_LIMITS.hardMaxDelta) hardBlocks.push("Delta exceeds hard maximum.");
+  if (input.dte !== undefined && input.dte > RISK_LIMITS.hardMaxDte) hardBlocks.push("DTE exceeds hard maximum.");
+  if (input.openInterest !== undefined && input.openInterest < RISK_LIMITS.minOpenInterest) hardBlocks.push("Open interest is below minimum.");
+  if (input.volume !== undefined && input.volume < RISK_LIMITS.minVolume) hardBlocks.push("Volume is below minimum.");
+  if (input.ivRank < RISK_LIMITS.minIvRank) hardBlocks.push("IV Rank is below minimum.");
 
   riskPoints += input.positionSizePercent > 0.15 ? 2 : 0;
   riskPoints += input.assignmentRisk > 0.3 ? 2 : input.assignmentRisk > 0.2 ? 1 : 0;
@@ -84,6 +95,10 @@ export function evaluateInstitutionalRisk(input: InstitutionalRiskInput): Instit
   };
 }
 
+/**
+ * @deprecated Use evaluateInstitutionalRisk() plus the decision-engine pipeline for user-facing decisions.
+ * This function is retained temporarily for older recommendation summaries and legacy tests.
+ */
 export function scoreTrade(input: RiskInput): RiskResult {
   const spreadPercent = bidAskSpreadPercent(input.bid, input.ask);
   const capitalRequired = cspCashRequirement(input.strike, 1);

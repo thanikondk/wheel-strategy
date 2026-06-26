@@ -1,6 +1,8 @@
 import { annualizedYield, bidAskSpreadPercent, calledAwayReturn, coveredCallMaxProfit, cspCashRequirement } from "@wheeldesk/calculators";
+import { DECISION_THRESHOLDS, RISK_LIMITS } from "@wheeldesk/core";
 import type { TradeStatus } from "@wheeldesk/core";
 import type { NormalizedOptionContract, Quote } from "@wheeldesk/market-data";
+import { evaluateInstitutionalRisk } from "@wheeldesk/risk-engine";
 
 export type ExplainableDecision = {
   finalDecision: TradeStatus;
@@ -26,6 +28,10 @@ export type CspDecisionInput = {
   riskScore: number;
   earningsRisk: boolean;
   assignmentReady: boolean;
+  fundamentalScore: number;
+  liquidityScore: number;
+  ivRank: number;
+  sectorExposure: number;
 };
 
 export type CoveredCallDecisionInput = {
@@ -40,8 +46,8 @@ export type CoveredCallDecisionInput = {
 
 function statusFrom(hardBlocks: string[], riskScore: number, wheelScore: number): TradeStatus {
   if (hardBlocks.length > 0) return "BLOCKED";
-  if (riskScore >= 7 || wheelScore < 55) return "AVOID";
-  if (riskScore >= 5 || wheelScore < 75) return "WATCH";
+  if (riskScore > DECISION_THRESHOLDS.watchMaxRiskScore || wheelScore < DECISION_THRESHOLDS.avoidBelowWheelScore) return "AVOID";
+  if (riskScore > DECISION_THRESHOLDS.approvedMaxRiskScore || wheelScore < DECISION_THRESHOLDS.approvedMinWheelScore) return "WATCH";
   return "APPROVED";
 }
 
@@ -52,15 +58,28 @@ export function decideCashSecuredPut(input: CspDecisionInput): ExplainableDecisi
   const netCostBasis = input.contract.strike - input.contract.mark;
   const annualized = annualizedYield(premiumIncome, capitalRequired, input.dte);
   const allocation = (capitalRequired + input.existingTickerExposure) / input.accountSize;
-  const cashReserveAfter = (input.cashAvailable - capitalRequired) / input.accountSize;
-  const hardRuleViolations = [
-    ...(allocation > 0.2 ? ["Capital required exceeds 20% maximum allocation per underlying."] : []),
-    ...(cashReserveAfter < 0.15 ? ["Cash reserve after trade would be below 15%."] : []),
-    ...(spreadPercent > 0.12 ? ["Bid/ask spread is too wide."] : []),
-    ...(input.earningsRisk ? ["Earnings risk is inside the configured window."] : []),
-    ...(!input.assignmentReady ? ["Stock is not marked assignment-ready."] : [])
-  ];
-  const finalDecision = statusFrom(hardRuleViolations, input.riskScore, input.wheelScore);
+  const risk = evaluateInstitutionalRisk({
+    ticker: input.contract.ticker,
+    accountSize: input.accountSize,
+    capitalRequired,
+    cashReserveAfterTrade: input.cashAvailable - capitalRequired,
+    sectorExposure: input.sectorExposure,
+    tickerExposure: allocation,
+    assignmentRisk: Math.abs(input.contract.delta),
+    liquidityScore: input.liquidityScore,
+    ivRank: input.ivRank,
+    earningsWindow: input.earningsRisk,
+    spreadPercent,
+    positionSizePercent: capitalRequired / input.accountSize,
+    fundamentalScore: input.fundamentalScore,
+    userWouldOwn: input.assignmentReady,
+    dte: input.dte,
+    delta: input.contract.delta,
+    openInterest: input.contract.openInterest,
+    volume: input.contract.volume
+  });
+  const hardRuleViolations = risk.hardBlocks;
+  const finalDecision = statusFrom(hardRuleViolations, risk.riskLevel, input.wheelScore);
 
   return {
     finalDecision,
@@ -78,22 +97,22 @@ export function decideCashSecuredPut(input: CspDecisionInput): ExplainableDecisi
       liquidityScore: Math.max(0, Math.min(100, input.contract.openInterest / 20 + input.contract.volume / 5)),
       earningsRisk: input.earningsRisk,
       assignmentReadiness: input.assignmentReady,
-      riskScore: input.riskScore,
+      riskScore: risk.riskLevel,
       wheelScore: input.wheelScore
     },
     positiveFactors: [
       ...(input.contract.probabilityOTM >= 0.7 ? ["Probability of profit is inside the target range."] : []),
-      ...(annualized >= 0.12 && annualized <= 0.3 ? ["Annualized yield is within the research target band."] : []),
-      ...(spreadPercent <= 0.06 ? ["Spread is tight."] : [])
+      ...(annualized >= RISK_LIMITS.annualReturnTargetMin && annualized <= RISK_LIMITS.annualReturnTargetMax ? ["Annualized yield is within the research target band."] : []),
+      ...(spreadPercent <= RISK_LIMITS.preferredSpreadPercent ? ["Spread is tight."] : [])
     ],
     negativeFactors: [
-      ...(annualized > 0.3 ? ["Yield is high enough to require extra skepticism."] : []),
-      ...(input.contract.delta > 0.3 ? ["Delta is above the preferred CSP range."] : []),
-      ...(input.wheelScore < 75 ? ["Wheel Score is below approval threshold."] : [])
+      ...(annualized > RISK_LIMITS.annualReturnTargetMax ? ["Yield is high enough to require extra skepticism."] : []),
+      ...(Math.abs(input.contract.delta) > RISK_LIMITS.cspDeltaMax ? ["Delta is above the preferred CSP range."] : []),
+      ...(input.wheelScore < DECISION_THRESHOLDS.approvedMinWheelScore ? ["Wheel Score is below approval threshold."] : [])
     ],
     hardRuleViolations,
     riskWarnings: ["Assignment can happen at any time before expiration.", "Maximum loss approaches the strike less premium if the underlying falls sharply."],
-    reasoning: [`Decision combines hard blocks, risk score ${input.riskScore}/10, and Wheel Score ${input.wheelScore}/100.`],
+    reasoning: [`Decision combines hard blocks, risk score ${risk.riskLevel}/10, and Wheel Score ${input.wheelScore}/100.`, ...risk.reasoning],
     whatCouldGoWrong: ["Underlying gaps below break-even.", "Volatility expands after entry.", "Liquidity disappears when adjustment is needed.", "Earnings or macro events reprice the stock."],
     exitPlan: ["Consider taking profit near 50% of max premium.", "Reassess at 14 DTE.", "Accept assignment only if allocation and cash reserve remain valid."]
   };

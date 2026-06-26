@@ -7,7 +7,7 @@ const call = { ...put, type: "call" as const, strike: 110, delta: 0.24, breakEve
 
 describe("decision engine", () => {
   it("approves a qualified CSP with transparent calculations", () => {
-    const decision = decideCashSecuredPut({ quote, contract: put, dte: 30, accountSize: 50_000, cashAvailable: 30_000, existingTickerExposure: 0, wheelScore: 86, riskScore: 3, earningsRisk: false, assignmentReady: true });
+    const decision = decideCashSecuredPut({ quote, contract: put, dte: 30, accountSize: 100_000, cashAvailable: 60_000, existingTickerExposure: 0, wheelScore: 86, riskScore: 3, earningsRisk: false, assignmentReady: true, fundamentalScore: 85, liquidityScore: 90, ivRank: 35, sectorExposure: 0.2 });
     expect(decision.finalDecision).toBe("APPROVED");
     expect(decision.supportingCalculations.capitalRequired).toBe(9000);
     expect(decision.whatCouldGoWrong.length).toBeGreaterThan(0);
