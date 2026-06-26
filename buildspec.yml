@@ -1,0 +1,31 @@
+version: 0.2
+
+env:
+  variables:
+    NODE_ENV: production
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - npm ci
+  pre_build:
+    commands:
+      - npm run test
+      - npm run lint
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+  build:
+    commands:
+      - npm run build
+      - docker build -t wheeldesk:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+      - docker tag wheeldesk:$CODEBUILD_RESOLVED_SOURCE_VERSION "$ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - docker push "$ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION"
+  post_build:
+    commands:
+      - printf '[{"name":"wheeldesk-web","imageUri":"%s"}]' "$ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION" > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - appspec.yml

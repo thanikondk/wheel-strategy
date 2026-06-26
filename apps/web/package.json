@@ -1,0 +1,49 @@
+{
+  "name": "@wheeldesk/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.6.0",
+    "@tanstack/react-table": "^8.17.3",
+    "@wheeldesk/calculators": "0.1.0",
+    "@wheeldesk/cache": "0.1.0",
+    "@wheeldesk/core": "0.1.0",
+    "@wheeldesk/fundamental-analysis": "0.1.0",
+    "@wheeldesk/market-data": "0.1.0",
+    "@wheeldesk/market-regime": "0.1.0",
+    "@wheeldesk/notifications": "0.1.0",
+    "@wheeldesk/options-engine": "0.1.0",
+    "@wheeldesk/risk-engine": "0.1.0",
+    "@wheeldesk/scoring-engine": "0.1.0",
+    "@wheeldesk/technical-analysis": "0.1.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "^14.2.0",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-hook-form": "^7.52.0",
+    "recharts": "^2.12.7",
+    "tailwind-merge": "^2.3.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4"
+  }
+}

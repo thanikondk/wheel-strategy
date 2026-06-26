@@ -1,0 +1,62 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@wheeldesk/core": [
+        "../../packages/core/src"
+      ],
+      "@wheeldesk/core/*": [
+        "../../packages/core/src/*"
+      ],
+      "@wheeldesk/calculators": [
+        "../../packages/calculators/src"
+      ],
+      "@wheeldesk/risk-engine": [
+        "../../packages/risk-engine/src"
+      ],
+      "@wheeldesk/market-data": [
+        "../../packages/market-data/src"
+      ],
+      "@wheeldesk/technical-analysis": [
+        "../../packages/technical-analysis/src"
+      ],
+      "@wheeldesk/fundamental-analysis": [
+        "../../packages/fundamental-analysis/src"
+      ],
+      "@wheeldesk/options-engine": [
+        "../../packages/options-engine/src"
+      ],
+      "@wheeldesk/scoring-engine": [
+        "../../packages/scoring-engine/src"
+      ],
+      "@wheeldesk/market-regime": [
+        "../../packages/market-regime/src"
+      ],
+      "@wheeldesk/cache": [
+        "../../packages/cache/src"
+      ],
+      "@wheeldesk/notifications": [
+        "../../packages/notifications/src"
+      ]
+    },
+    "incremental": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

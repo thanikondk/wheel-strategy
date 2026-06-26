@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "es2022"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@wheeldesk/core": ["packages/core/src"],
+      "@wheeldesk/core/*": ["packages/core/src/*"],
+      "@wheeldesk/risk-engine": ["packages/risk-engine/src"],
+      "@wheeldesk/risk-engine/*": ["packages/risk-engine/src/*"],
+      "@wheeldesk/calculators": ["packages/calculators/src"],
+      "@wheeldesk/calculators/*": ["packages/calculators/src/*"],
+      "@wheeldesk/market-data": ["packages/market-data/src"],
+      "@wheeldesk/technical-analysis": ["packages/technical-analysis/src"],
+      "@wheeldesk/fundamental-analysis": ["packages/fundamental-analysis/src"],
+      "@wheeldesk/options-engine": ["packages/options-engine/src"],
+      "@wheeldesk/scoring-engine": ["packages/scoring-engine/src"],
+      "@wheeldesk/market-regime": ["packages/market-regime/src"],
+      "@wheeldesk/cache": ["packages/cache/src"],
+      "@wheeldesk/scheduler": ["packages/scheduler/src"],
+      "@wheeldesk/database": ["packages/database/src"],
+      "@wheeldesk/notifications": ["packages/notifications/src"]
+    }
+  }
+}

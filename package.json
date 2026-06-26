@@ -1,0 +1,28 @@
+{
+  "name": "wheeldesk",
+  "private": true,
+  "version": "0.1.0",
+  "description": "WheelDesk: wheel strategy research, screening, tracking, and journaling for a risk-managed options income account.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @wheeldesk/web",
+    "build": "npm run build -w @wheeldesk/web",
+    "lint": "npm run lint -w @wheeldesk/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "npm run db:generate -w @wheeldesk/db",
+    "db:migrate": "npm run db:migrate -w @wheeldesk/db",
+    "db:seed": "npm run db:seed -w @wheeldesk/db"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

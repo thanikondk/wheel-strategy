@@ -1,0 +1,16 @@
+{
+  "name": "@wheeldesk/scoring-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@wheeldesk/fundamental-analysis": "0.1.0",
+    "@wheeldesk/options-engine": "0.1.0",
+    "@wheeldesk/risk-engine": "0.1.0",
+    "@wheeldesk/technical-analysis": "0.1.0"
+  }
+}

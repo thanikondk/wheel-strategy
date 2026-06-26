@@ -1,0 +1,285 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  accounts  Account[]
+  watchlist Watchlist?
+  trades    WheelTrade[]
+  journals  JournalEntry[]
+  alerts    Alert[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Account {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  name         String
+  accountValue Decimal
+  cashAvailable Decimal
+  cashReservePercent Decimal
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Watchlist {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id])
+  stocks    Stock[]
+  createdAt DateTime @default(now())
+}
+
+model Stock {
+  id                 String   @id @default(cuid())
+  watchlistId         String?
+  watchlist           Watchlist? @relation(fields: [watchlistId], references: [id])
+  ticker              String   @unique
+  name                String
+  sector              String
+  tier                String
+  currentPrice        Decimal
+  movingAverage50     Decimal
+  movingAverage200    Decimal
+  rsi                 Decimal
+  macdTrend           String
+  support             Decimal
+  resistance          Decimal
+  earningsDate        DateTime?
+  marketCapBillions   Decimal
+  revenueGrowth       Decimal
+  freeCashFlowBillions Decimal
+  debtToEquity        Decimal
+  roic                Decimal
+  grossMargin         Decimal
+  operatingMargin     Decimal
+  peg                 Decimal
+  moatScore           Int
+  wheelQualityScore   Int
+  liquidityScore      Int
+  eventRiskScore      Int
+  options             OptionContract[]
+  positions           Position[]
+  snapshots           DataSnapshot[]
+}
+
+model OptionContract {
+  id        String   @id @default(cuid())
+  stockId   String
+  stock     Stock    @relation(fields: [stockId], references: [id])
+  type      String
+  expiration DateTime
+  strike    Decimal
+  delta     Decimal
+  bid       Decimal
+  ask       Decimal
+  iv        Decimal
+  ivRank    Decimal
+  openInterest Int
+  volume    Int
+  createdAt DateTime @default(now())
+}
+
+model WheelTrade {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  cycleId   String?
+  cycle     WheelCycle? @relation(fields: [cycleId], references: [id])
+  ticker    String
+  strategy  String
+  action    String
+  tradeDate DateTime
+  expiration DateTime?
+  strike    Decimal?
+  contracts Int
+  premium   Decimal
+  fees      Decimal
+  dte       Int?
+  delta     Decimal?
+  ivRank    Decimal?
+  thesis    String
+  exitPlan  String
+  result    String?
+  lesson    String?
+  tags      String[]
+  createdAt DateTime @default(now())
+}
+
+model WheelCycle {
+  id        String   @id @default(cuid())
+  ticker    String
+  status    String
+  startedAt DateTime @default(now())
+  closedAt  DateTime?
+  trades    WheelTrade[]
+  assignments Assignment[]
+  coveredCalls CoveredCall[]
+}
+
+model Position {
+  id        String   @id @default(cuid())
+  stockId   String
+  stock     Stock    @relation(fields: [stockId], references: [id])
+  ticker    String
+  shares    Int
+  costBasis Decimal
+  adjustedCostBasis Decimal
+  createdAt DateTime @default(now())
+}
+
+model Assignment {
+  id        String   @id @default(cuid())
+  cycleId   String
+  cycle     WheelCycle @relation(fields: [cycleId], references: [id])
+  ticker    String
+  strike    Decimal
+  contracts Int
+  premiumReceived Decimal
+  assignedShares Int
+  adjustedCostBasis Decimal
+  assignedAt DateTime
+}
+
+model CoveredCall {
+  id        String   @id @default(cuid())
+  cycleId   String
+  cycle     WheelCycle @relation(fields: [cycleId], references: [id])
+  ticker    String
+  strike    Decimal
+  expiration DateTime
+  premium   Decimal
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model RiskRule {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  label     String
+  severity  String
+  enabled   Boolean  @default(true)
+  config    Json
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  tradeId   String?
+  ticker    String
+  entryThesis String
+  whyTicker String
+  whyStrike String
+  whyExpiration String
+  whatCanGoWrong String
+  exitPlan  String
+  postTradeReview String?
+  lessonLearned String?
+  createdAt DateTime @default(now())
+}
+
+model DataSnapshot {
+  id        String   @id @default(cuid())
+  stockId   String
+  stock     Stock    @relation(fields: [stockId], references: [id])
+  source    String
+  payload   Json
+  capturedAt DateTime @default(now())
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  ticker    String
+  type      String
+  threshold String
+  message   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model QuoteSnapshot {
+  id        String   @id @default(cuid())
+  ticker    String
+  price     Decimal
+  bid       Decimal
+  ask       Decimal
+  volume    Int
+  marketCap Decimal
+  asOf      DateTime
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([ticker, asOf])
+}
+
+model FundamentalSnapshot {
+  id        String   @id @default(cuid())
+  ticker    String
+  asOf      DateTime
+  profile   Json
+  metrics   Json
+  analysis  Json
+  createdAt DateTime @default(now())
+
+  @@index([ticker, asOf])
+}
+
+model OptionChainSnapshot {
+  id        String   @id @default(cuid())
+  ticker    String
+  expiration DateTime
+  asOf      DateTime
+  contracts Json
+  createdAt DateTime @default(now())
+
+  @@index([ticker, expiration, asOf])
+}
+
+model WheelScoreSnapshot {
+  id        String   @id @default(cuid())
+  ticker    String
+  score     Int
+  grade     String
+  components Json
+  explanation Json
+  asOf      DateTime
+  createdAt DateTime @default(now())
+
+  @@index([ticker, asOf])
+}
+
+model TechnicalIndicatorSnapshot {
+  id        String   @id @default(cuid())
+  ticker    String
+  asOf      DateTime
+  indicators Json
+  createdAt DateTime @default(now())
+
+  @@index([ticker, asOf])
+}
+
+model TradeRecommendationSnapshot {
+  id        String   @id @default(cuid())
+  ticker    String
+  recommendation String
+  riskLevel Int
+  annualizedYield Decimal
+  payload   Json
+  asOf      DateTime
+  createdAt DateTime @default(now())
+
+  @@index([ticker, asOf])
+}

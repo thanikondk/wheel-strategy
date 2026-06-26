@@ -1,0 +1,13 @@
+{
+  "name": "@wheeldesk/market-regime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@wheeldesk/core": "0.1.0"
+  }
+}
