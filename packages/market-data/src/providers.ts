@@ -1,4 +1,4 @@
-import type { CompanyProfile, DividendEvent, EarningsEvent, EconomicEvent, FinancialMetrics, HistoricalBar, NewsItem, NewsSentiment, NormalizedOptionContract, Quote } from "./models";
+import type { CompanyProfile, DividendEvent, EarningsEvent, EconomicEvent, FinancialMetrics, HistoricalBar, NewsItem, NewsSentiment, NormalizedOptionContract, ProviderHealth, Quote } from "./models";
 
 export interface StockDataProvider {
   getQuote(ticker: string): Promise<Quote>;
@@ -6,6 +6,7 @@ export interface StockDataProvider {
   getDailyBars(ticker: string, start: string, end: string): Promise<HistoricalBar[]>;
   getIntradayBars(ticker: string, interval: "1m" | "5m" | "15m" | "1h"): Promise<HistoricalBar[]>;
   getTechnicalIndicators(ticker: string): Promise<Record<string, number>>;
+  healthCheck(): Promise<ProviderHealth>;
 }
 
 export interface OptionsDataProvider {
@@ -26,16 +27,21 @@ export interface FundamentalProvider {
   getGrowthMetrics(ticker: string): Promise<Pick<FinancialMetrics, "revenueGrowth" | "earningsGrowth">>;
   getRatios(ticker: string): Promise<Partial<FinancialMetrics>>;
 }
+export type FundamentalDataProvider = FundamentalProvider;
 
 export interface EventProvider {
   getEarningsCalendar(tickers: string[], from: string, to: string): Promise<EarningsEvent[]>;
   getDividendCalendar(tickers: string[], from: string, to: string): Promise<DividendEvent[]>;
   getEconomicCalendar(from: string, to: string): Promise<EconomicEvent[]>;
 }
+export type EventDataProvider = EventProvider;
 
 export interface NewsProvider {
   getLatestNews(ticker: string): Promise<NewsItem[]>;
+  getCompanyNews(ticker: string): Promise<NewsItem[]>;
+  getMarketNews(): Promise<NewsItem[]>;
   getSentiment(ticker: string): Promise<NewsSentiment>;
 }
+export type NewsDataProvider = NewsProvider;
 
 export type MarketDataProvider = StockDataProvider & OptionsDataProvider & FundamentalProvider & EventProvider & NewsProvider;

@@ -20,7 +20,7 @@ export function analyzeFundamentals(profile: CompanyProfile, metrics: FinancialM
   const growthScore = clamp((metrics.revenueGrowth * 220) + (metrics.earningsGrowth * 180) + 45);
   const profitabilityScore = clamp(metrics.grossMargin * 45 + metrics.operatingMargin * 120 + metrics.roic * 180 + 20);
   const balanceSheetScore = clamp(90 - metrics.debtToEquity * 22 + metrics.currentRatio * 8 + metrics.quickRatio * 5);
-  const valueScore = clamp(85 - metrics.peg * 12 - metrics.forwardPe * 0.6 + metrics.freeCashFlow / 1_000_000_000);
+  const valueScore = clamp(85 - metrics.peg * 12 - metrics.forwardPE * 0.6 + metrics.freeCashFlow / 1_000_000_000);
   const moatScore = clamp(profile.marketCap / 25_000_000_000 + profitabilityScore * 0.55 + balanceSheetScore * 0.25);
   const dividendSafetyScore = clamp((profile.dividendYield > 0 ? 55 : 45) + balanceSheetScore * 0.25 + metrics.freeCashFlow / 2_000_000_000);
   const qualityScore = clamp(profitabilityScore * 0.45 + balanceSheetScore * 0.3 + growthScore * 0.15 + moatScore * 0.1);

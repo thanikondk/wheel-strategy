@@ -19,6 +19,7 @@ export class MockInstitutionalDataProvider implements MarketDataProvider {
       bid: Number((stock.price - 0.03).toFixed(2)),
       ask: Number((stock.price + 0.03).toFixed(2)),
       volume: 8_500_000,
+      avgVolume: 9_100_000,
       marketCap: stock.marketCapBillions * 1_000_000_000,
       timestamp: new Date().toISOString()
     };
@@ -31,7 +32,8 @@ export class MockInstitutionalDataProvider implements MarketDataProvider {
       const drift = (index - days) / days;
       const close = Number((stock.price * (1 + drift * 0.18 + Math.sin(index / 11) * 0.025)).toFixed(2));
       return {
-        date: new Date(Date.now() - (days - index) * 86_400_000).toISOString().slice(0, 10),
+        ticker: stock.ticker,
+        timestamp: new Date(Date.now() - (days - index) * 86_400_000).toISOString(),
         open: Number((close * 0.995).toFixed(2)),
         high: Number((close * 1.015).toFixed(2)),
         low: Number((close * 0.985).toFixed(2)),
@@ -80,13 +82,15 @@ export class MockInstitutionalDataProvider implements MarketDataProvider {
           vega: 0.11,
           rho: -0.02,
           iv: candidate.iv,
+          impliedVolatility: candidate.iv,
           volume: candidate.volume,
           openInterest: candidate.openInterest,
           intrinsicValue,
           extrinsicValue,
           breakEven: candidate.strike - candidate.mid,
           probabilityITM: Math.abs(candidate.delta),
-          probabilityOTM: 1 - Math.abs(candidate.delta)
+          probabilityOTM: 1 - Math.abs(candidate.delta),
+          timestamp: new Date().toISOString()
         };
       });
   }
@@ -112,15 +116,14 @@ export class MockInstitutionalDataProvider implements MarketDataProvider {
     const stock = findStock(ticker);
     return {
       ticker: stock.ticker,
-      name: stock.name,
+      companyName: stock.name,
       sector: stock.sector,
       industry: stock.sector,
-      employees: 100_000,
-      country: "US",
       marketCap: stock.marketCapBillions * 1_000_000_000,
       beta: 1.08,
       dividendYield: stock.ticker === "SCHD" ? 0.036 : 0.008,
-      ceo: "Mock CEO"
+      country: "US",
+      exchange: stock.ticker === "SCHD" ? "NYSE Arca" : "NASDAQ"
     };
   }
 
@@ -150,8 +153,8 @@ export class MockInstitutionalDataProvider implements MarketDataProvider {
       roa: stock.roic * 0.55,
       debtToEquity: stock.debtToEquity,
       peg: stock.peg,
-      forwardPe: 24,
-      trailingPe: 29,
+      forwardPE: 24,
+      trailingPE: 29,
       freeCashFlow: stock.freeCashFlowBillions * 1_000_000_000,
       currentRatio: 1.7,
       quickRatio: 1.2
@@ -187,7 +190,19 @@ export class MockInstitutionalDataProvider implements MarketDataProvider {
     return [{ ticker, headline: `${ticker} mock institutional news digest`, source: "Mock", url: "https://example.com", publishedAt: new Date().toISOString() }];
   }
 
+  async getCompanyNews(ticker: string) {
+    return this.getLatestNews(ticker);
+  }
+
+  async getMarketNews(): Promise<NewsItem[]> {
+    return [{ ticker: "SPY", headline: "Mock market news digest", source: "Mock", url: "https://example.com", publishedAt: new Date().toISOString() }];
+  }
+
   async getSentiment(ticker: string): Promise<NewsSentiment> {
     return { ticker, score: 0.12, label: "neutral", reasoning: ["Mock sentiment is neutral until a real provider is configured."] };
+  }
+
+  async healthCheck() {
+    return { provider: "MockInstitutionalDataProvider", ok: true, latencyMs: 0, checkedAt: new Date().toISOString() };
   }
 }

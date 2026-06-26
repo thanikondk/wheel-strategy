@@ -9,7 +9,11 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @wheeldesk/web",
+    "dev:3001": "npm run dev -- --port 3001",
+    "dev:clean": "npm run clean && npm run dev",
+    "dev:clean:3001": "npm run clean && npm run dev:3001",
     "build": "npm run build -w @wheeldesk/web",
+    "clean": "rm -rf apps/web/.next",
     "lint": "npm run lint -w @wheeldesk/web",
     "test": "vitest run",
     "test:watch": "vitest",

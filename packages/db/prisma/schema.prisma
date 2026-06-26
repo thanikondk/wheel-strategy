@@ -275,6 +275,8 @@ model TradeRecommendationSnapshot {
   id        String   @id @default(cuid())
   ticker    String
   recommendation String
+  finalUserDecision String?
+  eventualTradeOutcome String?
   riskLevel Int
   annualizedYield Decimal
   payload   Json

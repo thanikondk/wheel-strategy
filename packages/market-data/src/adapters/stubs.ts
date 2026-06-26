@@ -32,6 +32,8 @@ export abstract class UnimplementedProviderAdapter extends BaseHttpAdapter imple
   getDividendCalendar() { return Promise.reject(this.unavailable("getDividendCalendar")); }
   getEconomicCalendar() { return Promise.reject(this.unavailable("getEconomicCalendar")); }
   getLatestNews() { return Promise.reject(this.unavailable("getLatestNews")); }
+  getCompanyNews() { return Promise.reject(this.unavailable("getCompanyNews")); }
+  getMarketNews() { return Promise.reject(this.unavailable("getMarketNews")); }
   getSentiment() { return Promise.reject(this.unavailable("getSentiment")); }
 }
 

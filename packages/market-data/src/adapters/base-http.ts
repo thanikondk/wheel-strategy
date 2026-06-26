@@ -26,4 +26,14 @@ export abstract class BaseHttpAdapter {
 
     return response.json() as Promise<T>;
   }
+
+  async healthCheck() {
+    const startedAt = Date.now();
+    try {
+      if (!this.config.apiKey) throw new Error("API key is not configured.");
+      return { provider: this.config.providerName, ok: true, latencyMs: Date.now() - startedAt, checkedAt: new Date().toISOString() };
+    } catch (error) {
+      return { provider: this.config.providerName, ok: false, latencyMs: Date.now() - startedAt, checkedAt: new Date().toISOString(), error: error instanceof Error ? error.message : String(error) };
+    }
+  }
 }

@@ -29,7 +29,9 @@
       "@wheeldesk/cache": ["packages/cache/src"],
       "@wheeldesk/scheduler": ["packages/scheduler/src"],
       "@wheeldesk/database": ["packages/database/src"],
-      "@wheeldesk/notifications": ["packages/notifications/src"]
+      "@wheeldesk/notifications": ["packages/notifications/src"],
+      "@wheeldesk/decision-engine": ["packages/decision-engine/src"],
+      "@wheeldesk/wheel-state-machine": ["packages/wheel-state-machine/src"]
     }
   }
 }

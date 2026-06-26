@@ -8,12 +8,14 @@ export type Quote = {
   bid: number;
   ask: number;
   volume: number;
+  avgVolume: number;
   marketCap: number;
   timestamp: string;
 };
 
 export type HistoricalBar = {
-  date: string;
+  ticker: string;
+  timestamp: string;
   open: number;
   high: number;
   low: number;
@@ -38,24 +40,25 @@ export type NormalizedOptionContract = {
   iv: number;
   volume: number;
   openInterest: number;
+  impliedVolatility: number;
   intrinsicValue: number;
   extrinsicValue: number;
   breakEven: number;
   probabilityITM: number;
   probabilityOTM: number;
+  timestamp: string;
 };
 
 export type CompanyProfile = {
   ticker: string;
-  name: string;
+  companyName: string;
   sector: string;
   industry: string;
-  employees: number;
-  country: string;
   marketCap: number;
   beta: number;
   dividendYield: number;
-  ceo: string;
+  country: string;
+  exchange: string;
 };
 
 export type FinancialMetrics = {
@@ -70,11 +73,33 @@ export type FinancialMetrics = {
   roa: number;
   debtToEquity: number;
   peg: number;
-  forwardPe: number;
-  trailingPe: number;
+  forwardPE: number;
+  trailingPE: number;
   freeCashFlow: number;
   currentRatio: number;
   quickRatio: number;
+};
+
+export type TechnicalSnapshot = {
+  ticker: string;
+  price: number;
+  sma20: number;
+  sma50: number;
+  sma100: number;
+  sma200: number;
+  rsi14: number;
+  macd: number;
+  macdSignal: number;
+  atr14: number;
+  adx14: number;
+  bollingerUpper: number;
+  bollingerLower: number;
+  fiftyTwoWeekHigh: number;
+  fiftyTwoWeekLow: number;
+  support: number;
+  resistance: number;
+  trendDirection: "Bullish" | "Neutral" | "Bearish";
+  volumeTrend: "Rising" | "Stable" | "Falling";
 };
 
 export type EarningsEvent = {
@@ -109,4 +134,12 @@ export type NewsSentiment = {
   score: number;
   label: "negative" | "neutral" | "positive";
   reasoning: string[];
+};
+
+export type ProviderHealth = {
+  provider: string;
+  ok: boolean;
+  latencyMs: number;
+  checkedAt: string;
+  error?: string;
 };

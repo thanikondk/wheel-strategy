@@ -13,7 +13,13 @@ const nextConfig = {
     "@wheeldesk/market-regime",
     "@wheeldesk/cache",
     "@wheeldesk/notifications"
-  ]
+  ],
+  webpack(config, { dev }) {
+    if (dev) {
+      config.cache = false;
+    }
+    return config;
+  }
 };
 
 export default nextConfig;

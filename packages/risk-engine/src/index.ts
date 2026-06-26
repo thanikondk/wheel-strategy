@@ -1,5 +1,5 @@
 import { bidAskSpreadPercent, cspCashRequirement, wheelCapitalAllocation } from "@wheeldesk/calculators";
-import { ACCOUNT_RULES } from "@wheeldesk/core";
+import { ACCOUNT_RULES, RISK_LIMITS } from "@wheeldesk/core";
 import type { Confidence, MarketRegime, OptionCandidate, TradeStatus } from "@wheeldesk/core";
 
 export type RiskInput = OptionCandidate & {
@@ -55,11 +55,11 @@ export function evaluateInstitutionalRisk(input: InstitutionalRiskInput): Instit
   const reasoning: string[] = [];
   let riskPoints = 1;
 
-  if (input.capitalRequired / input.accountSize > ACCOUNT_RULES.maxAllocationPerUnderlying) hardBlocks.push("Capital exceeds 20% account allocation.");
-  if (input.cashReserveAfterTrade / input.accountSize < ACCOUNT_RULES.minCashReserve) hardBlocks.push("Cash reserve would fall below 15%.");
-  if (input.liquidityScore < 45) hardBlocks.push("Low liquidity.");
-  if (input.spreadPercent > ACCOUNT_RULES.maxSpreadPercent) hardBlocks.push("Wide bid/ask spread.");
-  if (input.fundamentalScore < 50) hardBlocks.push("Poor fundamentals.");
+  if (input.capitalRequired / input.accountSize > RISK_LIMITS.maxAllocationPerUnderlying) hardBlocks.push("Capital exceeds 20% account allocation.");
+  if (input.cashReserveAfterTrade / input.accountSize < RISK_LIMITS.minCashReserve) hardBlocks.push("Cash reserve would fall below 15%.");
+  if (input.liquidityScore < RISK_LIMITS.lowLiquidityScore) hardBlocks.push("Low liquidity.");
+  if (input.spreadPercent > RISK_LIMITS.maxSpreadPercent) hardBlocks.push("Wide bid/ask spread.");
+  if (input.fundamentalScore < RISK_LIMITS.poorFundamentalScore) hardBlocks.push("Poor fundamentals.");
   if (!input.userWouldOwn) hardBlocks.push("User marked stock as would not own.");
   if (input.earningsWindow && !input.earningsOverride) hardBlocks.push("Upcoming earnings inside configured window.");
 
@@ -69,7 +69,7 @@ export function evaluateInstitutionalRisk(input: InstitutionalRiskInput): Instit
   riskPoints += input.tickerExposure > 0.15 ? 1 : 0;
   riskPoints += input.ivRank > 70 ? 1 : 0;
   riskPoints += input.earningsWindow ? 2 : 0;
-  riskPoints += input.liquidityScore < 70 ? 1 : 0;
+  riskPoints += input.liquidityScore < RISK_LIMITS.softLiquidityScore ? 1 : 0;
 
   reasoning.push(`Risk level starts at 1 and adds points for position size, assignment risk, concentration, IV, events, and liquidity.`);
   reasoning.push(`Position size ${(input.positionSizePercent * 100).toFixed(1)}%, cash reserve after trade ${(input.cashReserveAfterTrade / input.accountSize * 100).toFixed(1)}%.`);

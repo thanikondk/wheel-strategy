@@ -1,0 +1,18 @@
+{
+  "name": "@wheeldesk/decision-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@wheeldesk/calculators": "0.1.0",
+    "@wheeldesk/core": "0.1.0",
+    "@wheeldesk/market-data": "0.1.0",
+    "@wheeldesk/options-engine": "0.1.0",
+    "@wheeldesk/risk-engine": "0.1.0",
+    "@wheeldesk/scoring-engine": "0.1.0"
+  }
+}
