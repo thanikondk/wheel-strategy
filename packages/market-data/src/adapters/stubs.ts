@@ -60,9 +60,3 @@ export class FinancialModelingPrepAdapter extends UnimplementedProviderAdapter {
     super({ providerName: "Financial Modeling Prep", baseUrl: "https://financialmodelingprep.com/api", apiKey });
   }
 }
-
-export class YahooDevelopmentAdapter extends UnimplementedProviderAdapter {
-  constructor() {
-    super({ providerName: "Yahoo Development", baseUrl: "https://query1.finance.yahoo.com", apiKey: "development-only" });
-  }
-}

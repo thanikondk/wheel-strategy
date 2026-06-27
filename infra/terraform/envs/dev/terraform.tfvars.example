@@ -1,0 +1,25 @@
+aws_region  = "us-east-1"
+environment = "dev"
+
+# First apply: keep desired_count = 0 until an image exists in ECR.
+# After pushing an image, set desired_count = 1 and app_image_tag to that tag.
+desired_count = 0
+app_image_tag = "bootstrap"
+
+wheel_market_data_provider = "yahoo-dev"
+wheel_account_value        = "20000"
+wheel_cash_available       = "15850"
+wheel_watchlist_tickers    = "AAPL,MSFT,AMD,JPM"
+wheel_ownable_tickers      = "AAPL,MSFT,AMD,JPM"
+
+# JSON string. Keep real holdings out of git; pass through TF_VAR_wheel_covered_call_positions or a local tfvars file.
+wheel_covered_call_positions = ""
+
+# Optional licensed provider keys.
+polygon_api_key       = ""
+tradier_api_key       = ""
+alpha_vantage_api_key = ""
+fmp_api_key           = ""
+
+# Optional HTTPS listener.
+certificate_arn = ""

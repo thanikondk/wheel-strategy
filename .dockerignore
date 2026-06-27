@@ -1,0 +1,14 @@
+.git
+.next
+.npm-cache
+node_modules
+coverage
+postgres-data
+redis-data
+.env
+.env.local
+.env.production
+*.log
+infra/terraform/**/.terraform
+infra/terraform/**/*.tfstate
+infra/terraform/**/*.tfstate.*

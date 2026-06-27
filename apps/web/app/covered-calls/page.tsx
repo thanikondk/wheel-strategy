@@ -10,6 +10,11 @@ export default async function CoveredCallsPage() {
     <>
       <PageHeader title="Covered Call Screener" subtitle="Screens owned-share calls and blocks below-basis strikes unless defensive recovery mode is intentionally enabled." />
       <Card>
+        {coveredCallCandidates.length === 0 ? (
+          <div className="py-10 text-sm text-slate-600 dark:text-slate-300">
+            No covered-call candidates are available. Configure real share positions with `WHEEL_COVERED_CALL_POSITIONS`.
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="text-sm">
             <thead className="border-b border-border text-left text-xs uppercase text-slate-500">
@@ -35,6 +40,7 @@ export default async function CoveredCallsPage() {
             </tbody>
           </table>
         </div>
+        )}
       </Card>
     </>
   );

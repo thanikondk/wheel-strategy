@@ -9,3 +9,8 @@ coverage
 *.log
 postgres-data
 redis-data
+.terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example

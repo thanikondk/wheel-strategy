@@ -56,6 +56,11 @@ export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: 
         <Button className="bg-slate-800"><SlidersHorizontal className="h-4 w-4" /> Presets</Button>
         <Button onClick={exportCsv}><Download className="h-4 w-4" /> Export CSV</Button>
       </div>
+      {rows.length === 0 ? (
+        <div className="py-10 text-sm text-slate-600 dark:text-slate-300">
+          No CSP candidates are available. Configure live provider settings, account values, watchlist tickers, and assignment-ready tickers.
+        </div>
+      ) : (
       <div className="overflow-x-auto">
         <table className="text-sm">
           <thead className="border-b border-border text-left text-xs uppercase text-slate-500">
@@ -92,6 +97,7 @@ export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: 
           </tbody>
         </table>
       </div>
+      )}
     </>
   );
 }

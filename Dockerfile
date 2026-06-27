@@ -1,12 +1,9 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-COPY apps/web/package.json apps/web/package.json
-COPY packages/core/package.json packages/core/package.json
-COPY packages/calculators/package.json packages/calculators/package.json
-COPY packages/risk-engine/package.json packages/risk-engine/package.json
-COPY packages/db/package.json packages/db/package.json
-RUN npm install
+COPY apps apps
+COPY packages packages
+RUN npm ci
 
 FROM node:20-alpine AS builder
 WORKDIR /app

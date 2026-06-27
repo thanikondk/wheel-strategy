@@ -1,6 +1,7 @@
 import type { MarketDataProvider } from "./providers";
 import { MockInstitutionalDataProvider } from "./adapters/mock";
-import { AlphaVantageAdapter, FinancialModelingPrepAdapter, PolygonAdapter, TradierAdapter, YahooDevelopmentAdapter } from "./adapters/stubs";
+import { AlphaVantageAdapter, FinancialModelingPrepAdapter, PolygonAdapter, TradierAdapter } from "./adapters/stubs";
+import { YahooDevelopmentAdapter } from "./adapters/yahoo-development";
 
 export type ProviderName = "mock" | "tradier" | "polygon" | "alpha-vantage" | "fmp" | "yahoo-dev";
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { MockMarketDataProvider } from "@wheeldesk/core";
+import { getInstitutionalService } from "@/lib/services/institutional-research-service";
 
 export async function GET() {
-  const provider = new MockMarketDataProvider();
-  return NextResponse.json({ data: await provider.getCoveredCalls() });
+  const service = await getInstitutionalService();
+  return NextResponse.json({ data: await service.screenCoveredCallCandidates() });
 }

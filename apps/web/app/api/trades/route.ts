@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tradeEvents } from "@wheeldesk/core";
 import { z } from "zod";
 
 const tradeSchema = z.object({
@@ -15,7 +14,11 @@ const tradeSchema = z.object({
 });
 
 export async function GET() {
-  return NextResponse.json({ data: tradeEvents });
+  return NextResponse.json({
+    data: [],
+    source: "unconfigured",
+    message: "No trade journal or broker activity source is connected. Seed trades are not returned as real history."
+  });
 }
 
 export async function POST(request: NextRequest) {
