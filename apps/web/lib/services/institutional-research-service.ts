@@ -4,7 +4,7 @@ import { evaluateEventRisk } from "@wheeldesk/market-data";
 import type { NormalizedOptionContract } from "@wheeldesk/market-data";
 import { analyzeFundamentals } from "@wheeldesk/fundamental-analysis";
 import { analyzeOption } from "@wheeldesk/options-engine";
-import { decideCashSecuredPut } from "@wheeldesk/decision-engine";
+import { decideCashSecuredPut, decideCoveredCall } from "@wheeldesk/decision-engine";
 import { evaluateInstitutionalRisk } from "@wheeldesk/risk-engine";
 import { calculateWheelScore, rankTrades } from "@wheeldesk/scoring-engine";
 import { analyzeTechnicals } from "@wheeldesk/technical-analysis";
@@ -167,6 +167,61 @@ export async function getInstitutionalService() {
     }));
   }
 
+  async function screenCoveredCallCandidates() {
+    const ownedPositions = [
+      { ticker: "AAPL", shares: 100, adjustedCostBasis: 202.85 },
+      { ticker: "AMD", shares: 100, adjustedCostBasis: 145.7 }
+    ];
+
+    const recommendations = await Promise.all(ownedPositions.map(async (position) => {
+      const quote = await getQuote(position.ticker);
+      const expirations = await provider.getExpirations(position.ticker);
+      const chain = await provider.getOptionChain(position.ticker, expirations[0]);
+      const syntheticCall = {
+        ...(chain[0] ?? (await provider.getOptionChain("AAPL", expirations[0]))[0]),
+        ticker: position.ticker,
+        type: "call" as const,
+        strike: Math.max(Math.ceil(position.adjustedCostBasis * 1.05), Math.ceil(quote.price * 1.05)),
+        delta: 0.24,
+        breakEven: Math.max(Math.ceil(position.adjustedCostBasis * 1.05), Math.ceil(quote.price * 1.05)) + 1.45
+      };
+      const optionDte = dte(syntheticCall.expiration);
+      const optionAnalytics = analyzeOption(syntheticCall, quote, optionDte, await provider.getExpectedMove(position.ticker, syntheticCall.expiration));
+      const decision = decideCoveredCall({
+        quote,
+        contract: syntheticCall,
+        dte: optionDte,
+        currentShares: position.shares,
+        adjustedCostBasis: position.adjustedCostBasis,
+        wheelScore: 80,
+        riskScore: 3,
+        liquidityScore: optionAnalytics.liquidityScore,
+        ivRank: optionAnalytics.ivRank,
+        earningsRisk: false,
+        fundamentalScore: 75,
+        sectorExposure: 0.24
+      });
+
+      return {
+        ticker: position.ticker,
+        contractsOwned: Math.floor(position.shares / 100),
+        costBasis: position.adjustedCostBasis,
+        adjustedCostBasis: position.adjustedCostBasis,
+        strike: syntheticCall.strike,
+        expiration: syntheticCall.expiration,
+        dte: optionDte,
+        delta: Math.abs(syntheticCall.delta),
+        premium: syntheticCall.mark * 100,
+        maxProfit: Number(decision.supportingCalculations.maxProfit),
+        calledAwayReturn: Number(decision.supportingCalculations.calledAwayReturn),
+        decision,
+        optionAnalytics
+      };
+    }));
+
+    return recommendations;
+  }
+
   async function rankCspUniverse(tickers = ["AAPL", "MSFT", "AMD", "JPM", "SOFI"]) {
     const recommendations = await Promise.all(tickers.map((ticker) => buildRecommendation(ticker).catch(() => undefined)));
     return rankTrades(recommendations.filter((item): item is Awaited<ReturnType<typeof buildRecommendation>> => Boolean(item)).map((item) => ({
@@ -183,6 +238,7 @@ export async function getInstitutionalService() {
     getQuote,
     buildRecommendation,
     screenCspCandidates,
+    screenCoveredCallCandidates,
     rankCspUniverse
   };
 }

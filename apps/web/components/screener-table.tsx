@@ -4,10 +4,20 @@ import { Download, Plus, SlidersHorizontal } from "lucide-react";
 import { Button, Badge } from "@/components/ui";
 import { currency, percent } from "@/lib/utils";
 import type { OptionCandidate } from "@wheeldesk/core";
-import type { RiskResult } from "@wheeldesk/risk-engine";
 import type { ExplainableDecision } from "@wheeldesk/decision-engine";
 
-export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: RiskResult; decision?: ExplainableDecision }> }) {
+type ScreenerRisk = {
+  score: number;
+  confidence: "Low" | "Medium" | "High";
+  status: "APPROVED" | "WATCH" | "AVOID" | "BLOCKED";
+  reasons: string[];
+  hardBlocks: string[];
+  spreadPercent: number;
+  capitalRequired: number;
+  allocationPercent: number;
+};
+
+export function ScreenerTable({ rows }: { rows: Array<OptionCandidate & { risk: ScreenerRisk; decision?: ExplainableDecision }> }) {
   function exportCsv() {
     const header = ["Ticker", "Price", "Expiration", "DTE", "Strike", "Delta", "Premium", "IV Rank", "PoP", "Annualized Yield", "Capital Required", "OI", "Volume", "Spread %", "Earnings Risk", "Score", "Action", "Reason"];
     const body = rows.map((row) => [

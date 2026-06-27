@@ -42,6 +42,11 @@ export type CoveredCallDecisionInput = {
   adjustedCostBasis: number;
   wheelScore: number;
   riskScore: number;
+  fundamentalScore?: number;
+  liquidityScore?: number;
+  ivRank?: number;
+  earningsRisk?: boolean;
+  sectorExposure?: number;
 };
 
 function statusFrom(hardBlocks: string[], riskScore: number, wheelScore: number): TradeStatus {
@@ -124,11 +129,32 @@ export function decideCoveredCall(input: CoveredCallDecisionInput): ExplainableD
   const maxProfit = coveredCallMaxProfit(input.contract.strike, input.adjustedCostBasis, input.contract.mark, 1);
   const annualized = annualizedYield(premiumIncome, input.adjustedCostBasis * 100, input.dte);
   const calledReturn = calledAwayReturn(input.contract.strike, input.adjustedCostBasis, input.contract.mark);
+  const risk = evaluateInstitutionalRisk({
+    ticker: input.contract.ticker,
+    accountSize: 100_000,
+    capitalRequired: 0,
+    cashReserveAfterTrade: 100_000,
+    sectorExposure: input.sectorExposure ?? 0,
+    tickerExposure: 0,
+    assignmentRisk: Math.abs(input.contract.delta),
+    liquidityScore: input.liquidityScore ?? Math.max(0, Math.min(100, input.contract.openInterest / 20 + input.contract.volume / 5)),
+    ivRank: input.ivRank ?? 30,
+    earningsWindow: input.earningsRisk ?? false,
+    spreadPercent: bidAskSpreadPercent(input.contract.bid, input.contract.ask),
+    positionSizePercent: 0,
+    fundamentalScore: input.fundamentalScore ?? 70,
+    userWouldOwn: true,
+    dte: input.dte,
+    delta: input.contract.delta,
+    openInterest: input.contract.openInterest,
+    volume: input.contract.volume
+  });
   const hardRuleViolations = [
+    ...risk.hardBlocks,
     ...(input.currentShares < 100 ? ["Covered call requires at least 100 shares."] : []),
     ...(!strikeAboveCostBasis ? ["Strike is below adjusted cost basis."] : [])
   ];
-  const finalDecision = statusFrom(hardRuleViolations, input.riskScore, input.wheelScore);
+  const finalDecision = statusFrom(hardRuleViolations, risk.riskLevel, input.wheelScore);
 
   return {
     finalDecision,
@@ -143,14 +169,14 @@ export function decideCoveredCall(input: CoveredCallDecisionInput): ExplainableD
       annualizedYield: annualized,
       downsideRisk: Math.max(input.adjustedCostBasis - input.contract.mark, 0),
       upsideGiveaway: Math.max(input.quote.price - input.contract.strike, 0),
-      riskScore: input.riskScore,
+      riskScore: risk.riskLevel,
       wheelScore: input.wheelScore
     },
     positiveFactors: [...(strikeAboveCostBasis ? ["Strike protects adjusted cost basis."] : []), ...(annualized >= 0.08 ? ["Premium is meaningful relative to basis."] : [])],
     negativeFactors: [...(!strikeAboveCostBasis ? ["Call risks locking in a below-basis exit."] : [])],
     hardRuleViolations,
     riskWarnings: ["Shares may be called away if price closes above strike.", "Covered calls cap upside while downside remains stock ownership risk."],
-    reasoning: [`Decision combines cost basis protection, risk score ${input.riskScore}/10, and Wheel Score ${input.wheelScore}/100.`],
+    reasoning: [`Decision combines cost basis protection, risk score ${risk.riskLevel}/10, and Wheel Score ${input.wheelScore}/100.`, ...risk.reasoning],
     whatCouldGoWrong: ["Stock rallies far above strike.", "Stock sells off more than premium collected.", "Early assignment around dividend risk."],
     exitPlan: ["Consider closing near 50% premium capture.", "Roll only if thesis and liquidity remain intact.", "Do not roll into a lower-quality risk profile."]
   };

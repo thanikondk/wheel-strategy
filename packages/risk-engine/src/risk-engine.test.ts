@@ -1,47 +1,49 @@
 import { describe, expect, it } from "vitest";
-import { cspCandidates } from "@wheeldesk/core";
-import { scoreTrade, summarizeRecommendation } from "./index";
+import { evaluateInstitutionalRisk, type InstitutionalRiskInput } from "./index";
 
-const baseInput = {
-  ...cspCandidates[1],
-  ticker: "TEST",
-  currentPrice: 42,
-  strike: 35,
-  bid: 0.6,
-  ask: 0.65,
-  mid: 0.625,
-  premium: 62.5,
-  accountSize: 20_000,
-  cashAvailable: 15_850,
-  cashReserveAfterTrade: 15_850 - 35 * 100,
-  tickerQualityScore: 88,
-  existingExposure: 0,
-  sectorConcentration: 0.2,
-  assignmentReady: true,
-  marketRegime: "Sideways" as const
+const baseInput: InstitutionalRiskInput = {
+  ticker: "AAPL",
+  accountSize: 100_000,
+  capitalRequired: 9_000,
+  cashReserveAfterTrade: 60_000,
+  sectorExposure: 0.2,
+  tickerExposure: 0.09,
+  assignmentRisk: 0.22,
+  liquidityScore: 90,
+  ivRank: 35,
+  earningsWindow: false,
+  spreadPercent: 0.04,
+  positionSizePercent: 0.09,
+  fundamentalScore: 85,
+  userWouldOwn: true,
+  dte: 30,
+  delta: 0.22,
+  openInterest: 1_000,
+  volume: 250
 };
 
-describe("risk engine", () => {
-  it("approves or watches candidates that meet core rules", () => {
-    const result = scoreTrade(baseInput);
-    expect(["APPROVED", "WATCH"]).toContain(result.status);
+describe("institutional risk engine", () => {
+  it("approves candidates that meet hard rules and low-risk profile", () => {
+    const result = evaluateInstitutionalRisk(baseInput);
+    expect(result.status).toBe("APPROVED");
     expect(result.hardBlocks).toHaveLength(0);
   });
 
   it("blocks trades over max allocation", () => {
-    const result = scoreTrade({ ...baseInput, strike: 1000 });
+    const result = evaluateInstitutionalRisk({ ...baseInput, capitalRequired: 25_000, positionSizePercent: 0.25, tickerExposure: 0.25 });
     expect(result.status).toBe("BLOCKED");
-    expect(result.hardBlocks.join(" ")).toContain("20% max allocation");
+    expect(result.hardBlocks.join(" ")).toContain("20% account allocation");
   });
 
   it("blocks trades that are not assignment-ready", () => {
-    const result = scoreTrade({ ...baseInput, userWouldOwn: false, assignmentReady: false });
+    const result = evaluateInstitutionalRisk({ ...baseInput, userWouldOwn: false });
     expect(result.status).toBe("BLOCKED");
-    expect(result.hardBlocks.join(" ")).toContain("assignment-ready");
+    expect(result.hardBlocks.join(" ")).toContain("would not own");
   });
 
-  it("produces a recommendation with maximum loss language", () => {
-    const recommendation = summarizeRecommendation(baseInput);
-    expect(recommendation.exitPlan.maximumLossScenario).toContain("fall substantially");
+  it("blocks illiquid option contracts", () => {
+    const result = evaluateInstitutionalRisk({ ...baseInput, liquidityScore: 20, openInterest: 10, volume: 1 });
+    expect(result.status).toBe("BLOCKED");
+    expect(result.hardBlocks.join(" ")).toContain("Low liquidity");
   });
 });
