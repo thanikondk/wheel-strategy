@@ -56,6 +56,12 @@ terraform apply
 
 The stack creates VPC networking, ALB, ECS Fargate, ECR, RDS PostgreSQL, ElastiCache Redis, Secrets Manager, CloudWatch logs, and an EventBridge Scheduler placeholder for future snapshot jobs.
 
+To quickly destroy the dev stack and stop AWS charges:
+
+```bash
+AWS_PROFILE=wheeldesk scripts/destroy-aws.sh --yes
+```
+
 ## Current Phase
 
 Phase 1 is implemented as a production-ready scaffold with provider abstractions:

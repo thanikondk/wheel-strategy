@@ -75,7 +75,13 @@ Terraform will create an HTTPS listener and redirect HTTP to HTTPS.
 This is real infrastructure and will incur AWS charges. The highest baseline costs are usually NAT Gateway, RDS, ECS/Fargate runtime, and ALB. Destroy when not needed:
 
 ```bash
-terraform destroy
+../../../../scripts/destroy-aws.sh
+```
+
+For unattended cleanup:
+
+```bash
+AWS_PROFILE=wheeldesk ../../../../scripts/destroy-aws.sh --yes
 ```
 
 For RDS production use, set `enable_deletion_protection = true` and manage final snapshots deliberately.
